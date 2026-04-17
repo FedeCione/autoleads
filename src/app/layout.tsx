@@ -23,6 +23,14 @@ export const metadata: Metadata = {
     description:
       'Pipeline de IA para clasificar y responder leads inmobiliarios. Demo publica.',
     type: 'website',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'AutoLeads — Automatizacion de leads con IA',
+      },
+    ],
   },
 };
 
