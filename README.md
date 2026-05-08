@@ -1,96 +1,104 @@
-# AutoLeads — demo de automatización de leads con IA
+# AutoLeads — AI lead automation demo
 
-Demo pública de un pipeline de IA que clasifica, puntúa y redacta respuestas para leads de una inmobiliaria ficticia de Buenos Aires ("Inmobiliaria Palermo"). Los leads llegan de WhatsApp, formularios web, MercadoLibre e Instagram; la IA extrae datos estructurados (operación, tipo de propiedad, presupuesto, zona), asigna prioridad (alta/media/baja) y genera una respuesta en español rioplatense lista para enviar.
+[![Next.js](https://img.shields.io/badge/next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/tailwind-4-06b6d4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Groq](https://img.shields.io/badge/groq-llama%203.3%2070B-f55036?logo=meta&logoColor=white)](https://groq.com)
+[![License: MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](./LICENSE)
+
+Public demo of an AI pipeline that classifies, scores, and drafts replies for leads coming into a fictional Buenos Aires real estate agency ("Inmobiliaria Palermo"). Leads arrive from WhatsApp, web forms, MercadoLibre, and Instagram; the AI extracts structured data (operation, property type, budget, neighborhood), assigns priority (high/medium/low), and generates a ready-to-send reply in Rioplatense Spanish.
 
 **Stack**: Next.js 16 · Groq (Llama 3.3 70B, JSON mode) · Zod v4 · Tailwind CSS v4 · Vercel Analytics
 
-## Cómo probarlo
+## Quick start
 
 ```bash
 pnpm install
 cp .env.local.example .env.local
-# Completá GROQ_API_KEY con tu key de https://console.groq.com/keys
+# Fill in GROQ_API_KEY with your key from https://console.groq.com/keys
 pnpm dev
-# Abrí http://localhost:3000
+# Open http://localhost:3000
 ```
 
-Sin `GROQ_API_KEY` la API devuelve un mensaje de `[DEMO MODE]` en lugar de llamar a Groq.
+Without `GROQ_API_KEY`, the API returns a `[DEMO MODE]` message instead of calling Groq.
 
-Probalo:
+Try it:
 
-1. Click en **"Cargar ejemplos"** — se precargan 6 consultas que cubren el espectro alta/media/baja/off-topic.
-2. Click en **"Procesar todos"** — el pipeline anima los 4 pasos (Recepción → Extracción IA → Clasificación → Respuesta) por cada lead.
-3. Click en una fila de resultados para ver la respuesta completa, los datos extraídos y el puntaje.
+1. Click **"Cargar ejemplos"** — six sample queries are preloaded covering the high/medium/low/off-topic spectrum.
+2. Click **"Procesar todos"** — the pipeline animates the four steps (Reception → AI Extraction → Classification → Reply) for each lead.
+3. Click a result row to see the full reply, the extracted data, and the score.
 
-## Cómo retargetearlo para tu negocio
+## Retargeting it for your business
 
-Son dos archivos:
+Two files:
 
-- `src/lib/leadPrompt.ts` — system prompt con el rubro y los campos a extraer. Cambiá inmobiliaria por tu vertical (clínica, estudio jurídico, gimnasio, ecommerce, etc.) y los campos estructurados que te interesa capturar.
-- `src/data/sampleLeads.ts` — consultas de ejemplo para la demo. Reemplazá por mensajes reales de tu pipeline.
+- `src/lib/leadPrompt.ts` — system prompt with the vertical and the fields to extract. Replace real estate with your vertical (clinic, law firm, gym, e-commerce, etc.) and the structured fields you want to capture.
+- `src/data/sampleLeads.ts` — sample queries for the demo. Replace with real messages from your pipeline.
 
-El resto (validación Zod, rate limit, CORS, UI del dashboard) no se toca.
+The rest (Zod validation, rate limit, CORS, dashboard UI) doesn't need to change.
 
-## Cómo se conecta en producción
+## How it connects in production
 
-En la demo los leads se cargan manualmente. En producción el flujo es:
+In the demo, leads are loaded manually. In production the flow is:
 
 ```
-Lead entra por WhatsApp / formulario web / MercadoLibre / Instagram
-  → Webhook POST a tu servidor con el payload del proveedor
-  → Tu servidor verifica firma/origen
-  → Llama al mismo endpoint /api/process con el mensaje
-  → Recibe JSON con datos extraídos + prioridad + respuesta sugerida
-  → Escribe fila en Google Sheets / Airtable / tu CRM
-  → Envía la respuesta por el canal original (WhatsApp Business API,
-    reply al email del form, DM de Instagram, etc.)
-  → Notifica al equipo de ventas si la prioridad es "alta"
+Lead arrives via WhatsApp / web form / MercadoLibre / Instagram
+  → Webhook POST to your server with the provider's payload
+  → Your server verifies signature/origin
+  → Calls the same /api/process endpoint with the message
+  → Receives JSON with extracted data + priority + suggested reply
+  → Writes a row to Google Sheets / Airtable / your CRM
+  → Sends the reply through the original channel (WhatsApp Business API,
+    reply to the form's email, Instagram DM, etc.)
+  → Notifies the sales team if priority is "high"
 ```
 
-Eso es lo que entrega el servicio pago: las integraciones con los canales de entrada, la escritura al CRM, las notificaciones al equipo y el deploy. La demo prueba que la parte de IA (extracción + clasificación + redacción) funciona con datos reales.
+That's what the paid service delivers: the integrations with the inbound channels, the CRM writes, the team notifications, and the deployment. The demo proves that the AI part (extraction + classification + drafting) works on real data.
 
-## Estructura
+## Project layout
 
 ```
 src/
   app/
-    api/process/route.ts   — validación, rate limit, llamada a Groq (JSON mode)
-    page.tsx                — renderiza <Dashboard />
+    api/process/route.ts   — validation, rate limit, Groq call (JSON mode)
+    page.tsx                — renders <Dashboard />
     layout.tsx              — metadata, fonts, analytics
     globals.css             — Tailwind v4 @theme (dark dashboard)
   components/
-    Dashboard.tsx           — orquestador de estado y procesamiento
-    Header.tsx              — barra superior con indicador DEMO
-    Footer.tsx              — CTA al portfolio
-    LeadInput.tsx           — panel izq: formulario + cola de leads
-    Pipeline.tsx            — panel centro: stepper animado de 4 pasos
-    PipelineStep.tsx        — step individual con transiciones
-    ResultsTable.tsx        — panel der: tabla de resultados
-    ResultRow.tsx           — fila expandible con datos extraídos
-    ScoreRing.tsx           — anillo SVG con puntaje y color
-    ActivityLog.tsx         — log estilo terminal
-    LogEntry.tsx            — línea individual del log
-    DraftResponseModal.tsx  — modal con respuesta completa + metadata
-    Badge.tsx               — pill reutilizable (prioridad/estado)
+    Dashboard.tsx           — state and processing orchestrator
+    Header.tsx              — top bar with DEMO indicator
+    Footer.tsx              — CTA to portfolio
+    LeadInput.tsx           — left panel: form + lead queue
+    Pipeline.tsx            — center panel: animated 4-step stepper
+    PipelineStep.tsx        — individual step with transitions
+    ResultsTable.tsx        — right panel: results table
+    ResultRow.tsx           — expandable row with extracted data
+    ScoreRing.tsx           — SVG ring with score and color
+    ActivityLog.tsx         — terminal-style log
+    LogEntry.tsx            — individual log line
+    DraftResponseModal.tsx  — modal with full reply + metadata
+    Badge.tsx               — reusable pill (priority/status)
   data/
-    sampleLeads.ts          — 6 consultas precargadas
-    pipelineSteps.ts        — definición de los 4 pasos
+    sampleLeads.ts          — 6 preloaded queries
+    pipelineSteps.ts        — definition of the 4 steps
   lib/
     leadPrompt.ts           — system prompt + buildMessages()
-    leadSchema.ts           — schemas Zod (request + salida IA)
-    rateLimit.ts            — rate limiter in-memory (15 req/h/IP)
-    cors.ts                 — check de origin/host
+    leadSchema.ts           — Zod schemas (request + AI output)
+    rateLimit.ts            — in-memory rate limiter (15 req/h/IP)
+    cors.ts                 — origin/host check
   types/
-    lead.ts                 — tipos compartidos
+    lead.ts                 — shared types
 ```
 
-## Autor
+## About the author / Sobre el autor
 
-**Federico Cione** — Backend Engineer · IA & Automatización
+**EN** — Built by **Federico Cione**, a backend engineer from Argentina. I build typed, tested, AI-integrated backends and process automation for product teams. Available for **AI process automation** engagements. [Book a discovery call →](https://fedecione-portfolio.vercel.app/#contact)
 
-- Portfolio: [fedecione.dev](https://fedecione-portfolio.vercel.app)
+**ES** — Hecho por **Federico Cione**, desarrollador backend argentino. Construyo backends tipados, testeados y con IA integrada, y automatización de procesos para equipos de producto. Disponible para paquetes de **automatización de procesos con IA**. [Agendá una llamada →](https://fedecione-portfolio.vercel.app/#contact)
+
+- Portfolio: [fedecione-portfolio.vercel.app](https://fedecione-portfolio.vercel.app)
 - GitHub: [github.com/FedeCione](https://github.com/FedeCione)
 
-## Licencia
+## License
 
-MIT
+[MIT](./LICENSE) © Federico Cione
