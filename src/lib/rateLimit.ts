@@ -20,6 +20,8 @@ export function checkRateLimit(ip: string): {
 }
 
 export function getClientIp(request: Request): string {
+  const vercel = request.headers.get('x-vercel-forwarded-for');
+  if (vercel) return vercel.split(',')[0].trim();
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0].trim();
   const real = request.headers.get('x-real-ip');
