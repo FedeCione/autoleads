@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     try {
       json = JSON.parse(content);
     } catch {
-      console.error('[autoleads] JSON parse failed. Raw:', content);
+      console.error('[autoleads] JSON parse failed');
       return NextResponse.json(
         { error: 'processing_failed', detail: 'invalid_json' },
         { status: 503 },
@@ -82,8 +82,10 @@ export async function POST(request: Request) {
 
     const validated = aiOutputSchema.safeParse(json);
     if (!validated.success) {
-      console.error('[autoleads] Zod validation failed:', JSON.stringify(validated.error.issues));
-      console.error('[autoleads] AI output was:', JSON.stringify(json));
+      console.error(
+        '[autoleads] Zod validation failed:',
+        JSON.stringify(validated.error.issues),
+      );
       return NextResponse.json(
         { error: 'processing_failed', detail: 'validation_failed' },
         { status: 503 },
